@@ -115,4 +115,11 @@ public class EmployeeService {
         Employee updated = employeeRepository.save(employee);
         return EmployeeResponseDto.fromEntity(updated);
     }
+
+    @Transactional
+    public void deleteEmployee(UUID employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+        employeeRepository.delete(employee);
+    }
 }

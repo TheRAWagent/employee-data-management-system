@@ -361,4 +361,30 @@ class EmployeeServiceTest {
         verify(employeeRepository).save(any(Employee.class));
     }
 
+    @Test
+    void deleteEmployee_success() {
+        UUID id = UUID.randomUUID();
+        Employee emp = new Employee();
+        emp.setId(id);
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.of(emp));
+
+        employeeService.deleteEmployee(id);
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository).delete(emp);
+    }
+
+    @Test
+    void deleteEmployee_notFound_throwsException() {
+        UUID id = UUID.randomUUID();
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class,
+                () -> employeeService.deleteEmployee(id));
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository, never()).delete(any());
+    }
 }
