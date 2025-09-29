@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: Employee Data Management System
+  datasource:
+    driver-class-name: ${DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
+    username: ${DATASOURCE_USERNAME:sa}
+    password: ${DATASOURCE_PASSWORD:}
+    url: ${DATASOURCE_URL:jdbc:h2:mem:employee-data-management}
+
