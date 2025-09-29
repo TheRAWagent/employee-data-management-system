@@ -2,7 +2,10 @@ package co.dj.employee_data_management.service;
 
 import co.dj.employee_data_management.dto.CreateEmployeeDto;
 import co.dj.employee_data_management.dto.EmployeeResponseDto;
+import co.dj.employee_data_management.dto.PatchEmployeeDto;
+import co.dj.employee_data_management.dto.UpdateEmployeeDto;
 import co.dj.employee_data_management.exception.EmailAlreadyExistsException;
+import co.dj.employee_data_management.exception.EmployeeNotFoundException;
 import co.dj.employee_data_management.model.Employee;
 import co.dj.employee_data_management.repo.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,5 +67,52 @@ public class EmployeeService {
                 .findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPositionContainingIgnoreCase(
                         searchTerm, searchTerm, searchTerm, pageRequest)
                 .map(EmployeeResponseDto::fromEntity);
+    }
+
+    @Transactional
+    public EmployeeResponseDto updateEmployee(UUID employeeId, UpdateEmployeeDto dto) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+
+        String normalizedEmail = dto.getEmail().trim().toLowerCase(Locale.ROOT);
+
+        // If email changed, check uniqueness
+        if (!employee.getEmail().equals(normalizedEmail)
+                && employeeRepository.existsByEmail(normalizedEmail)) {
+            throw new EmailAlreadyExistsException(normalizedEmail);
+        }
+
+        // Update fields
+        employee.setName(dto.getName().trim());
+        employee.setPosition(dto.getPosition().trim());
+        employee.setEmail(normalizedEmail);
+
+        Employee updated = employeeRepository.save(employee);
+        return EmployeeResponseDto.fromEntity(updated);
+    }
+
+    @Transactional
+    public EmployeeResponseDto patchEmployee(UUID employeeId, PatchEmployeeDto dto) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+
+        // Update only non-null fields
+        if (dto.getName() != null) {
+            employee.setName(dto.getName().trim());
+        }
+        if (dto.getPosition() != null) {
+            employee.setPosition(dto.getPosition().trim());
+        }
+        if (dto.getEmail() != null) {
+            String normalizedEmail = dto.getEmail().trim().toLowerCase(Locale.ROOT);
+            if (!employee.getEmail().equals(normalizedEmail)
+                    && employeeRepository.existsByEmail(normalizedEmail)) {
+                throw new EmailAlreadyExistsException(normalizedEmail);
+            }
+            employee.setEmail(normalizedEmail);
+        }
+
+        Employee updated = employeeRepository.save(employee);
+        return EmployeeResponseDto.fromEntity(updated);
     }
 }

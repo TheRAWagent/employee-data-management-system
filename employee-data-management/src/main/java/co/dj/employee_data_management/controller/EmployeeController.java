@@ -2,6 +2,8 @@ package co.dj.employee_data_management.controller;
 
 import co.dj.employee_data_management.dto.CreateEmployeeDto;
 import co.dj.employee_data_management.dto.EmployeeResponseDto;
+import co.dj.employee_data_management.dto.PatchEmployeeDto;
+import co.dj.employee_data_management.dto.UpdateEmployeeDto;
 import co.dj.employee_data_management.model.Employee;
 import co.dj.employee_data_management.service.EmployeeService;
 import jakarta.validation.Valid;
@@ -40,5 +42,23 @@ public class EmployeeController {
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size) {
         return employeeService.getEmployees(employeeId ,search, page, size);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EmployeeResponseDto> updateEmployee(
+            @PathVariable("id") UUID id,
+            @Valid @RequestBody UpdateEmployeeDto dto) {
+
+        EmployeeResponseDto updated = employeeService.updateEmployee(id, dto);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<EmployeeResponseDto> patchEmployee(
+            @PathVariable UUID id,
+            @Valid @RequestBody PatchEmployeeDto dto) {
+
+        EmployeeResponseDto updated = employeeService.patchEmployee(id, dto);
+        return ResponseEntity.ok(updated);
     }
 }

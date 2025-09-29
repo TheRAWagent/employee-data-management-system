@@ -2,7 +2,10 @@ package co.dj.employee_data_management.service;
 
 import co.dj.employee_data_management.dto.CreateEmployeeDto;
 import co.dj.employee_data_management.dto.EmployeeResponseDto;
+import co.dj.employee_data_management.dto.PatchEmployeeDto;
+import co.dj.employee_data_management.dto.UpdateEmployeeDto;
 import co.dj.employee_data_management.exception.EmailAlreadyExistsException;
+import co.dj.employee_data_management.exception.EmployeeNotFoundException;
 import co.dj.employee_data_management.model.Employee;
 import co.dj.employee_data_management.repo.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -195,6 +198,167 @@ class EmployeeServiceTest {
         assertTrue(result.getContent().isEmpty());
         verify(employeeRepository).findById(id);
         verifyNoMoreInteractions(employeeRepository);
+    }
+
+    @Test
+    void updateEmployee_success() {
+        UUID id = UUID.randomUUID();
+        Employee emp = new Employee();
+        emp.setId(id);
+        emp.setName("Old Name");
+        emp.setPosition("Old Position");
+        emp.setEmail("old@example.com");
+
+        UpdateEmployeeDto dto = new UpdateEmployeeDto();
+        dto.setName("New Name");
+        dto.setPosition("New Position");
+        dto.setEmail("new@example.com");
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.of(emp));
+        when(employeeRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(i -> i.getArgument(0));
+
+        var updated = employeeService.updateEmployee(id, dto);
+
+        assertEquals("New Name", updated.getName());
+        assertEquals("New Position", updated.getPosition());
+        assertEquals("new@example.com", updated.getEmail());
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository).existsByEmail("new@example.com");
+        verify(employeeRepository).save(any(Employee.class));
+    }
+
+    @Test
+    void updateEmployee_emailAlreadyExists_throwsException() {
+        UUID id = UUID.randomUUID();
+        Employee emp = new Employee();
+        emp.setId(id);
+        emp.setName("Old Name");
+        emp.setPosition("Old Position");
+        emp.setEmail("old@example.com");
+
+        UpdateEmployeeDto dto = new UpdateEmployeeDto();
+        dto.setName("New Name");
+        dto.setPosition("New Position");
+        dto.setEmail("existing@example.com");
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.of(emp));
+        when(employeeRepository.existsByEmail("existing@example.com")).thenReturn(true);
+
+        assertThrows(EmailAlreadyExistsException.class,
+                () -> employeeService.updateEmployee(id, dto));
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository).existsByEmail("existing@example.com");
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void updateEmployee_notFound_throwsException() {
+        UUID id = UUID.randomUUID();
+        UpdateEmployeeDto dto = new UpdateEmployeeDto();
+        dto.setName("New Name");
+        dto.setPosition("New Position");
+        dto.setEmail("new@example.com");
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class,
+                () -> employeeService.updateEmployee(id, dto));
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void patchEmployee_updateNameAndEmail_success() {
+        UUID id = UUID.randomUUID();
+        Employee emp = new Employee();
+        emp.setId(id);
+        emp.setName("Old Name");
+        emp.setPosition("Old Position");
+        emp.setEmail("old@example.com");
+
+        PatchEmployeeDto dto = new PatchEmployeeDto();
+        dto.setName("New Name");
+        dto.setEmail("new@example.com"); // only name & email updated
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.of(emp));
+        when(employeeRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(i -> i.getArgument(0));
+
+        var updated = employeeService.patchEmployee(id, dto);
+
+        assertEquals("New Name", updated.getName());
+        assertEquals("Old Position", updated.getPosition());
+        assertEquals("new@example.com", updated.getEmail());
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository).existsByEmail("new@example.com");
+        verify(employeeRepository).save(any(Employee.class));
+    }
+
+    @Test
+    void patchEmployee_emailAlreadyExists_throwsException() {
+        UUID id = UUID.randomUUID();
+        Employee emp = new Employee();
+        emp.setId(id);
+        emp.setName("Old Name");
+        emp.setPosition("Old Position");
+        emp.setEmail("old@example.com");
+
+        PatchEmployeeDto dto = new PatchEmployeeDto();
+        dto.setEmail("existing@example.com");
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.of(emp));
+        when(employeeRepository.existsByEmail("existing@example.com")).thenReturn(true);
+
+        assertThrows(EmailAlreadyExistsException.class,
+                () -> employeeService.patchEmployee(id, dto));
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository).existsByEmail("existing@example.com");
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void patchEmployee_notFound_throwsException() {
+        UUID id = UUID.randomUUID();
+        PatchEmployeeDto dto = new PatchEmployeeDto();
+        dto.setName("New Name");
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class,
+                () -> employeeService.patchEmployee(id, dto));
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void patchEmployee_noFieldsProvided_returnsUnchanged() {
+        UUID id = UUID.randomUUID();
+        Employee emp = new Employee();
+        emp.setId(id);
+        emp.setName("Old Name");
+        emp.setPosition("Old Position");
+        emp.setEmail("old@example.com");
+
+        PatchEmployeeDto dto = new PatchEmployeeDto(); // all fields null
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.of(emp));
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(i -> i.getArgument(0));
+
+        var updated = employeeService.patchEmployee(id, dto);
+
+        assertEquals("Old Name", updated.getName());
+        assertEquals("Old Position", updated.getPosition());
+        assertEquals("old@example.com", updated.getEmail());
+
+        verify(employeeRepository).findById(id);
+        verify(employeeRepository).save(any(Employee.class));
     }
 
 }
