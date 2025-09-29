@@ -1,6 +1,7 @@
 package co.dj.employee_data_management.service;
 
 import co.dj.employee_data_management.dto.CreateEmployeeDto;
+import co.dj.employee_data_management.dto.EmployeeResponseDto;
 import co.dj.employee_data_management.exception.EmailAlreadyExistsException;
 import co.dj.employee_data_management.model.Employee;
 import co.dj.employee_data_management.repo.EmployeeRepository;
@@ -11,7 +12,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +33,8 @@ class EmployeeServiceTest {
     private EmployeeService employeeService;
 
     private CreateEmployeeDto dto;
+    private Employee emp1;
+    private Employee emp2;
 
     @BeforeEach
     void setUp() {
@@ -34,6 +42,18 @@ class EmployeeServiceTest {
         dto.setName(" Alice ");
         dto.setPosition(" Engineer ");
         dto.setEmail(" Alice@Example.com ");
+
+        emp1 = new Employee();
+        emp1.setId(UUID.randomUUID());
+        emp1.setName("Alice");
+        emp1.setPosition("Engineer");
+        emp1.setEmail("alice@example.com");
+
+        emp2 = new Employee();
+        emp2.setId(UUID.randomUUID());
+        emp2.setName("Bob");
+        emp2.setPosition("Manager");
+        emp2.setEmail("bob@example.com");
     }
 
     @Test
@@ -107,4 +127,74 @@ class EmployeeServiceTest {
         // Assert returned entity
         assertEquals(id, result.getId());
     }
+
+    @Test
+    void getEmployees_noSearch_defaultsToPage0Size10() {
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Employee> page = new PageImpl<>(List.of(emp1, emp2), pageable, 2);
+
+        when(employeeRepository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPositionContainingIgnoreCase(
+                "", "", "", pageable))
+                .thenReturn(page);
+
+        Page<EmployeeResponseDto> result = employeeService.getEmployees(null, null, null, null);
+
+        assertEquals(2, result.getTotalElements());
+        assertEquals("Alice", result.getContent().get(0).getName());
+        assertEquals("Bob", result.getContent().get(1).getName());
+        verify(employeeRepository).findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPositionContainingIgnoreCase(
+                "", "", "", pageable);
+    }
+
+    @Test
+    void getEmployees_withSearchAndPagination() {
+        String search = "alice";
+        int pageNum = 1;
+        int pageSize = 5;
+        PageRequest pageable = PageRequest.of(pageNum, pageSize);
+        Page<Employee> page = new PageImpl<>(List.of(emp1), pageable, 1);
+
+        when(employeeRepository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPositionContainingIgnoreCase(
+                search, search, search, pageable))
+                .thenReturn(page);
+
+        Page<EmployeeResponseDto> result = employeeService.getEmployees(null, search, pageNum, pageSize);
+
+        assertEquals(1, result.getContent().size());
+        assertEquals("Alice", result.getContent().getFirst().getName());
+        verify(employeeRepository).findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrPositionContainingIgnoreCase(
+                search, search, search, pageable);
+    }
+
+    @Test
+    void getEmployees_byId_found() {
+        UUID id = UUID.randomUUID();
+        Employee emp = new Employee();
+        emp.setId(id);
+        emp.setName("Alice");
+        emp.setPosition("Engineer");
+        emp.setEmail("alice@example.com");
+
+        when(employeeRepository.findById(id)).thenReturn(Optional.of(emp));
+
+        Page<EmployeeResponseDto> result = employeeService.getEmployees(id, null, null, null);
+
+        assertEquals(1, result.getContent().size());
+        assertEquals("Alice", result.getContent().getFirst().getName());
+        verify(employeeRepository).findById(id);
+        verifyNoMoreInteractions(employeeRepository);
+    }
+
+    @Test
+    void getEmployees_byId_notFound_returnsEmptyPage() {
+        UUID id = UUID.randomUUID();
+        when(employeeRepository.findById(id)).thenReturn(Optional.empty());
+
+        Page<EmployeeResponseDto> result = employeeService.getEmployees(id, null, null, null);
+
+        assertTrue(result.getContent().isEmpty());
+        verify(employeeRepository).findById(id);
+        verifyNoMoreInteractions(employeeRepository);
+    }
+
 }

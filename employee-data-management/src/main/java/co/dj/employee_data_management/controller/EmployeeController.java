@@ -6,14 +6,13 @@ import co.dj.employee_data_management.model.Employee;
 import co.dj.employee_data_management.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/api/employees")
@@ -32,5 +31,14 @@ public class EmployeeController {
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(saved.getId()).toUri();
 
         return ResponseEntity.created(location).body(EmployeeResponseDto.fromEntity(saved));
+    }
+
+    @GetMapping
+    public Page<EmployeeResponseDto> getEmployees(
+            @RequestParam(value = "employeeId", required = false) UUID employeeId,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
+        return employeeService.getEmployees(employeeId ,search, page, size);
     }
 }
