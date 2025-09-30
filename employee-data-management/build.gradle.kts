@@ -38,6 +38,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("jakarta.validation:jakarta.validation-api")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
 }
 
 hibernate {
