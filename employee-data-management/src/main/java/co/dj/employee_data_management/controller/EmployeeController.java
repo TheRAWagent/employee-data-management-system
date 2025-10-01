@@ -9,13 +9,17 @@ import co.dj.employee_data_management.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.UUID;
 
+@CrossOrigin
+@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 @RestController
 @RequestMapping(value = "/api/employees")
 public class EmployeeController {
@@ -30,7 +34,7 @@ public class EmployeeController {
     public ResponseEntity<EmployeeResponseDto> createEmployee(@Valid @RequestBody CreateEmployeeDto createEmployeeDto) {
         Employee saved = employeeService.createEmployee(createEmployeeDto);
 
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(saved.getId()).toUri();
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().queryParamIfPresent("employeeId", Optional.ofNullable(saved.getId())).buildAndExpand(saved.getId()).toUri();
 
         return ResponseEntity.created(location).body(EmployeeResponseDto.fromEntity(saved));
     }

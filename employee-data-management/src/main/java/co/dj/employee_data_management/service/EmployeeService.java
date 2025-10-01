@@ -56,7 +56,7 @@ public class EmployeeService {
         }
 
 
-        int pageNumber = page != null && page >= 0 ? page : 0;
+        int pageNumber = page != null && page > 0 ? page-1 : 0;
         int pageSize = size != null && size > 0 ? size : 10;
 
         PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
