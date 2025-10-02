@@ -1,7 +1,14 @@
+import { lazy, Suspense } from "react";
+
 import type { components } from "@/generated/types";
 
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { EmployeeForm } from "@/components/employee-form";
+
+const EmployeeForm = lazy(() =>
+  import("@/components/employee-form").then((m) => ({
+    default: m.EmployeeForm,
+  }))
+);
 
 interface UpdateEmployeeDialogProps {
   open: boolean;
@@ -21,11 +28,13 @@ export const UpdateEmployeeDialog = ({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <EmployeeForm
-        onSuccess={() => onOpenChange(false)}
-        onCancel={() => onOpenChange(false)}
-        initialValues={initialValues}
-      />
+      <Suspense fallback={null}>
+        <EmployeeForm
+          onSuccess={() => onOpenChange(false)}
+          onCancel={() => onOpenChange(false)}
+          initialValues={initialValues}
+        />
+      </Suspense>
     </ResponsiveDialog>
   );
 };

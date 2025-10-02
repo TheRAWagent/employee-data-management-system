@@ -1,15 +1,22 @@
-import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
-import { EmployeeForm } from "@/components/employee-form";
+import { lazy, Suspense } from "react";
 
-interface NewMeetingDialogProps {
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+
+const EmployeeForm = lazy(() =>
+  import("@/components/employee-form").then((m) => ({
+    default: m.EmployeeForm,
+  }))
+);
+
+interface NewEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const NewMeetingDialog = ({
+export const NewEmployeeDialog = ({
   open,
   onOpenChange,
-}: NewMeetingDialogProps) => {
+}: NewEmployeeDialogProps) => {
   return (
     <ResponsiveDialog
       title="New Employee"
@@ -17,10 +24,12 @@ export const NewMeetingDialog = ({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <EmployeeForm
-        onSuccess={() => onOpenChange(false)}
-        onCancel={() => onOpenChange(false)}
-      />
+      <Suspense fallback={null}>
+        <EmployeeForm
+          onSuccess={() => onOpenChange(false)}
+          onCancel={() => onOpenChange(false)}
+        />
+      </Suspense>
     </ResponsiveDialog>
   );
 };

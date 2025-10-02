@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && mkdir -p ../employee-data-management/src/main/resources/static/ && cp -r dist/* ../employee-data-management/src/main/resources/static/",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:ts": "tsc --noEmit",

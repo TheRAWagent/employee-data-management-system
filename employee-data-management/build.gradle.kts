@@ -3,7 +3,6 @@ plugins {
 	id("org.springframework.boot") version "3.5.6"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("org.hibernate.orm") version "6.6.29.Final"
-	id("org.graalvm.buildtools.native") version "0.10.6"
 }
 
 group = "co.dj"

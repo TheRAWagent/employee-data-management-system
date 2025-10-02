@@ -6,4 +6,8 @@ spring:
     username: ${DATASOURCE_USERNAME:sa}
     password: ${DATASOURCE_PASSWORD:}
     url: ${DATASOURCE_URL:jdbc:h2:mem:employee-data-management}
-
+server:
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,application/octet-stream
+    min-response-size: 1024

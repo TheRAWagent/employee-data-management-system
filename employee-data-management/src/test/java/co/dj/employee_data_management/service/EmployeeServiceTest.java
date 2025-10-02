@@ -152,7 +152,7 @@ class EmployeeServiceTest {
     @Test
     void getEmployees_withSearchAndPagination() {
         String search = "alice";
-        int pageNum = 1;
+        int pageNum = 0;
         int pageSize = 5;
         PageRequest pageable = PageRequest.of(pageNum, pageSize);
         Page<Employee> page = new PageImpl<>(List.of(emp1), pageable, 1);
